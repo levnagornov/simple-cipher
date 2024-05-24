@@ -9,14 +9,16 @@ import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 public class Main {
-    public static final Path inputFile = Path.of("./src/main/resources/text.txt");
-    public static final Path outputFile = Path.of("./src/main/resources/result.txt");
-    public static final int key = 3;
+    public static final Path INPUT_FILE = Path.of("./src/main/resources/text.txt");
+    public static final Path OUTPUT_FILE = Path.of("./src/main/resources/result.txt");
+    public static final int KEY = 3;
 
-    public static void main(String[] args) {
-        measureExecution("Single-threaded execution", Main::singleThreadCaesar);
-        measureExecution("Multi-threaded execution by lines",Main::multiThreadCaesarByLines);
-        measureExecution("Multi-threaded execution by chunks",Main::multiThreadCaesarByChunks);
+    public static void main(String[] args) throws IOException {
+        List<String> text = Files.readAllLines(INPUT_FILE);
+        measureExecution("Multi-threaded execution by chunks", () -> multiThreadCaesarByChunks(text));
+        measureExecution("Multi-threaded execution by lines", () -> multiThreadCaesarByLines(text));
+        measureExecution("Single-threaded execution", () -> singleThreadCaesar(text));
+        measureExecution("Parallel stream execution", () -> parallelStreamCaesar(text));
     }
 
     public static void measureExecution(String taskName, Runnable runnable) {
@@ -27,22 +29,20 @@ public class Main {
         System.out.println(taskName + ": " + duration + " ms");
     }
 
-    public static void singleThreadCaesar() {
+    public static void singleThreadCaesar(List<String> text) {
         try {
-            List<String> text = Files.readAllLines(inputFile);
             List<String> result = text.stream()
                     .map(Main::encryptLine)
-                    .collect(Collectors.toList());
+                    .toList();
 
-            Files.write(outputFile, result);
+            Files.write(OUTPUT_FILE, result);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public static void multiThreadCaesarByLines() {
+    public static void multiThreadCaesarByLines(List<String> text) {
         try {
-            List<String> text = Files.readAllLines(inputFile);
             List<String> result = new ArrayList<>();
             List<Future<String>> futures = new ArrayList<>();
 
@@ -56,16 +56,16 @@ public class Main {
                     result.add(future.get());
                 }
 
-                Files.write(outputFile, result);
+                Files.write(OUTPUT_FILE, result);
             }
         } catch (IOException | InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public static void multiThreadCaesarByChunks() {
+    public static void multiThreadCaesarByChunks(List<String> textToJoin) {
         try {
-            String text = String.join(System.lineSeparator(), Files.readAllLines(inputFile));
+            String text = String.join(System.lineSeparator(), textToJoin);
             int availableProcessors = Runtime.getRuntime().availableProcessors();
             int chunkSize = (text.length() + availableProcessors - 1) / availableProcessors;
             List<Future<String>> futures = new ArrayList<>();
@@ -83,13 +83,24 @@ public class Main {
                     result.add(future.get());
                 }
 
-                Files.write(outputFile, result);
+                Files.write(OUTPUT_FILE, result);
             }
         } catch (IOException | InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
     }
 
+    public static void parallelStreamCaesar(List<String> text) {
+        try {
+            List<String> result = text.parallelStream()
+                    .map(Main::encryptLine)
+                    .collect(Collectors.toList());
+
+            Files.write(OUTPUT_FILE, result);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     private static String encryptChunk(String text, int start, int end) {
         StringBuilder chunkResult = new StringBuilder();
@@ -125,7 +136,7 @@ public class Main {
             return letter;
         }
 
-        int shiftedPosition = (currentPosition + key + alphabetLength) % alphabetLength;
+        int shiftedPosition = (currentPosition + KEY + alphabetLength) % alphabetLength;
         char shifterChar = alphabet.charAt(shiftedPosition);
 
         return isUpperCase
