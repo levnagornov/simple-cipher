@@ -7,7 +7,7 @@ The application was created to test whether multiprocessing would help speed up 
 - multiThreadCaesarByLines
 - multiThreadCaesarByChunks
 
-### There are 2 haevy txt files:
+### There are 2 heavy txt files:
 - text.txt contains several copies of John Ronald Reuel Tolkien's book. Lord of the Rings
 - result.txt contains the result of encryption of text.txt
 
