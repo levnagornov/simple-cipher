@@ -15,13 +15,13 @@ public class Main {
 
     public static void main(String[] args) {
         measureExecution("Single-threaded execution", Main::singleThreadCaesar);
-        measureExecution("Multi-threaded execution by lines",Main::multiThreadCaesarByLines);
-        measureExecution("Multi-threaded execution by chunks",Main::multiThreadCaesarByChunks);
+        measureExecution("Multi-threaded execution by lines", Main::multiThreadCaesarByLines);
+        measureExecution("Multi-threaded execution by chunks", Main::multiThreadCaesarByChunks);
     }
 
-    public static void measureExecution(String taskName, Runnable runnable) {
+    public static void measureExecution(String taskName, Runnable task) {
         long startTime = System.currentTimeMillis();
-        runnable.run();
+        task.run();
         long endTime = System.currentTimeMillis();
         long duration = endTime - startTime;
         System.out.println(taskName + ": " + duration + " ms");
